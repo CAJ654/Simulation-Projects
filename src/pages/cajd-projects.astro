@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ForestFireSimulator from '../components/react/ForestFireSimulator';
+---
+
+<Layout title="Forest Fire Simulator">
+    <a href="/" class="back-link">&larr; Back to Home</a>
+    <h1 class="title">Forest Fire Simulator</h1>
+    <ForestFireSimulator client:load />
+</Layout>
