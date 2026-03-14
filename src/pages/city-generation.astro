@@ -1,0 +1,13 @@
+
+---
+import Layout from '../layouts/Layout.astro';
+import CityGeneration from '../components/react/CityGeneration.tsx';
+---
+
+<Layout title="City Generation">
+	<div class="container">
+        <a href="/" class="back-link">&larr; Back to Home</a>
+		<h1 class="title">City Generation</h1>
+		<CityGeneration client:load />
+	</div>
+</Layout>

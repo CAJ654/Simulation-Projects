@@ -13,14 +13,18 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   // Enable many frameworks to support all different kinds of components.
   integrations: [
-      preact({ include: ['**/preact/*'] }),
-      solid({ include: ['**/solid/*'] }),
-      react({ include: ['**/react/*'] }),
-      svelte(),
-      vue(),
-	],
+    preact({ include: ['**/preact/*'] }),
+    solid({ include: ['**/solid/*'] }),
+    react({ include: ['**/react/*'] }),
+    svelte(),
+    vue(),
+  ],
 
   vite: {
     plugins: [tailwindcss()],
   },
+  build: {
+    assetsRelativeQuery: true, // Helps with local asset resolution
+  },
+  base: './', // Forces relative paths for the build
 });

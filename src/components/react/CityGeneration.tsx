@@ -1,17 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Residential, Commercial, Industrial, Road } from '../../scripts/city-simulation/buildings';
-import { Person } from '../../scripts/city-simulation/person';
+import { Residential, Commercial, Industrial, Road } from '../../scripts/city-generation/buildings';
 
-const CitySimulation = () => {
+const CityGeneration = () => {
   const [gridSize, setGridSize] = useState(50);
   const [cellSize, setCellSize] = useState(16);
   const [grid, setGrid] = useState(() =>
     Array.from({ length: gridSize }, () => Array(gridSize).fill(null))
   );
-  const [people, setPeople] = useState([]);
   const [buildings, setBuildings] = useState([]);
-  const [isRunning, setIsRunning] = useState(false);
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -19,17 +16,6 @@ const CitySimulation = () => {
     const context = canvas.getContext('2d');
     drawGrid(context, grid);
   }, [grid, gridSize, cellSize]);
-
-  useEffect(() => {
-    if (isRunning) {
-      const interval = setInterval(() => {
-        // Main simulation loop
-        // update people, buildings, etc.
-      }, 1000); // Update every second
-
-      return () => clearInterval(interval);
-    }
-  }, [isRunning]);
 
   const getDensityColor = (baseColor, density) => {
     if (!density) return baseColor;
@@ -90,8 +76,7 @@ const CitySimulation = () => {
     }
   };
 
-  const handleStart = () => {
-    setIsRunning(true);
+  const handleGenerate = () => {
     // Initial setup
     let newBuildings = [];
     const newGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(null));
@@ -309,16 +294,9 @@ const CitySimulation = () => {
     buildings.push(...newBuildings);
   }
 
-
-  const handleStop = () => {
-    setIsRunning(false);
-  };
-
   const handleReset = () => {
     setGrid(Array.from({ length: gridSize }, () => Array(gridSize).fill(null)));
-    setPeople([]);
     setBuildings([]);
-    setIsRunning(false);
   };
 
   const handleSizeChange = (event) => {
@@ -365,15 +343,11 @@ const CitySimulation = () => {
           max="100"
           value={gridSize}
           onChange={handleSizeChange}
-          disabled={isRunning}
         />
       </div>
       <div style={{ marginTop: '1rem' }}>
-        <button onClick={handleStart} disabled={isRunning}>
-          Start
-        </button>
-        <button onClick={handleStop} disabled={!isRunning}>
-          Stop
+        <button onClick={handleGenerate}>
+          Generate
         </button>
         <button onClick={handleReset}>Reset</button>
       </div>
@@ -381,4 +355,4 @@ const CitySimulation = () => {
   );
 };
 
-export default CitySimulation;
+export default CityGeneration;
