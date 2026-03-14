@@ -1,29 +1,90 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Card from '../components/Card.astro';
 ---
 
 <Layout title="Simulation Projects">
-    <h1 class="title">Simulation Projects</h1>
-    <div class="card-grid">
-        <a href="/forest-fire" class="card">
-            <h2>Forest Fire Simulator</h2>
-            <p>Experience the mesmerizing dance of a forest fire with this interactive simulator.</p>
-        </a>
-        <a href="/fish-boids" class="card">
-            <h2>Fish Boids</h2>
-            <p>A mesmerizing simulation of flocking behavior in fish.</p>
-        </a>
-        <a href="/city-generation" class="card">
-            <h2>City Generation</h2>
-            <p>A generative simulation of city growth and development.</p>
-        </a>
-        <a href="/whirlpool" class="card">
-            <h2>Whirlpool Vector Field</h2>
-            <p>An interactive simulation of a whirlpool vector field.</p>
-        </a>
-        <a href="/ant-colony" class="card">
-            <h2>Ant Colony Simulator</h2>
-            <p>An Ant Colony delving into the world of pheromones.</p>
-        </a>
-    </div>
+	<main>
+		<h1>Simulation Projects</h1>
+		<ul role="list" class="link-card-grid">
+			<Card
+				href="/fish-boids"
+				title="Fish Boids"
+				body="An animation of flocking behavior, simulating the mesmerizing movement of a school of fish."
+			/>
+			<Card
+				href="/forest-fire"
+				title="Forest Fire"
+				body="A simulation of a forest fire, demonstrating how fires spread in a grid-based environment."
+			/>
+			<Card
+				href="/city-generation"
+				title="City Generation"
+				body="A procedural city generator that creates unique, sprawling urban landscapes."
+			/>
+			<Card
+				href="/whirlpool"
+				title="Whirlpool"
+				body="A captivating visual of a swirling whirlpool, showcasing fluid dynamics in a mesmerizing animation."
+			/>
+			<Card
+				href="/ant-colony"
+				title="Ant Colony Simulation"
+				body="A mesmerizing simulation of ants foraging for food, leaving pheromone trails, and working together as a colony."
+			/>
+		</ul>
+	</main>
 </Layout>
+
+<style>
+	main {
+		margin: auto;
+		padding: 1.5rem;
+		max-width: 60ch;
+	}
+	h1 {
+		font-size: 3rem;
+		font-weight: 800;
+		margin: 0;
+	}
+	.text-gradient {
+		background-image: var(--accent-gradient);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-size: 400%;
+		background-position: 0%;
+	}
+	.instructions {
+		line-height: 1.6;
+		margin: 1rem 0;
+		border: 1px solid rgba(var(--accent), 25%);
+		background-color: white;
+		padding: 1rem;
+		border-radius: 0.4rem;
+	}
+	.instructions code {
+		font-size: 0.875em;
+		font-weight: bold;
+		background: rgba(var(--accent), 12%);
+		color: rgb(var(--accent));
+		border-radius: 4px;
+		padding: 0.3em 0.45em;
+	}
+	.instructions strong {
+		color: rgb(var(--accent));
+	}
+	.link-card-grid {
+		width: 100%;
+		margin-top: 2.5rem;
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1.5rem;
+		padding: 0;
+	}
+
+	@media (min-width: 768px) {
+		.link-card-grid {
+			grid-template-columns: repeat(auto-fit, minmax(24ch, 1fr));
+		}
+	}
+</style>

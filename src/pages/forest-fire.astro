@@ -1,10 +1,27 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import ForestFireSimulator from '../components/svelte/ForestFireSimulator.svelte';
+import ForestFire from '../components/svelte/ForestFireSimulator.svelte';
 ---
 
-<Layout title="Forest Fire Simulator">
-    <a href="/" class="back-link">&larr; Back to Home</a>
-    <h1 class="title">Forest Fire Simulator</h1>
-    <ForestFireSimulator client:load />
+<Layout title="Forest Fire">
+	<main class="container mx-auto p-4">
+		<h1 class="text-4xl font-bold text-center mb-8">Forest Fire</h1>
+		
+		<div class="flex justify-center mb-8">
+			<ForestFire client:load />
+		</div>
+
+		<div class="max-w-2xl mx-auto">
+			<h2 class="text-2xl font-semibold mb-4">How it Works</h2>
+			<p class="mb-4">
+				This simulation models the spread of a forest fire. Here's how it works:
+			</p>
+			<ul class="list-disc list-inside mb-4 space-y-2">
+				<li>The simulation takes place on a grid, where each cell can be in one of three states: tree, fire, or empty.</li>
+				<li>The fire starts at a random location.</li>
+				<li>In each step of the simulation, the fire spreads to adjacent trees.</li>
+				<li>The simulation ends when the fire can no longer spread.</li>
+			</ul>
+		</div>
+	</main>
 </Layout>

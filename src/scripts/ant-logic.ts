@@ -1,109 +1,96 @@
-import * as PIXI from 'pixi.js';
+import type * as PIXI from 'pixi.js';
 
-export enum PheromoneType {
-  ToHome,
-  ToFood,
+export interface PheromoneGrid {
+    width: number;
+    height: number;
+    cellSize: number;
+    grid: { toFood: number; toHome: number }[][];
 }
 
-export class Ant {
-  sprite: PIXI.Sprite;
-  direction: number = Math.random() * Math.PI * 2;
-  carryingFood: boolean = false;
-  private speed = 2;
-  private pheromoneDropCounter = 0;
+export function getAntClass(PIXIInstance: typeof PIXI) {
+    return class Ant {
+        sprite: PIXI.Sprite;
+        speed = 2;
+        direction = Math.random() * Math.PI * 2;
+        turningSpeed = 0.2;
+        state: 'seeking-food' | 'returning-home' = 'seeking-food';
+        lastPheromoneDrop = 0;
 
-  constructor(texture: PIXI.Texture, x: number, y: number) {
-    this.sprite = new PIXI.Sprite(texture);
-    this.sprite.x = x;
-    this.sprite.y = y;
-    this.sprite.anchor.set(0.5);
-    this.sprite.rotation = this.direction;
-  }
+        constructor(texture: PIXI.Texture, x: number, y: number) {
+            this.sprite = new PIXIInstance.Sprite(texture);
+            this.sprite.anchor.set(0.5);
+            this.sprite.position.set(x, y);
+            this.sprite.rotation = this.direction;
+        }
 
-  update(delta: number, foodLocation: PIXI.Point, nestLocation: PIXI.Point, pheromoneTexture: PIXI.RenderTexture, app: PIXI.Application) {
-    const pheromoneData = app.renderer.extract.pixels(pheromoneTexture);
+        update(delta: number, foodLocation: PIXI.Point, nestLocation: PIXI.Point, pheromoneGrid: PheromoneGrid): boolean {
+            if (this.state === 'seeking-food') {
+                const gridX = Math.floor(this.sprite.x / pheromoneGrid.cellSize);
+                const gridY = Math.floor(this.sprite.y / pheromoneGrid.cellSize);
+                let maxPheromone = -1;
+                let bestDirection = this.direction;
 
-    const turnStrength = 0.2;
-    const sensorAngle = Math.PI / 4; // 45 degrees
-    const sensorDistance = 10;
+                for (let i = -1; i <= 1; i++) {
+                    for (let j = -1; j <= 1; j++) {
+                        const newX = gridX + i;
+                        const newY = gridY + j;
+                        if (newX >= 0 && newX < pheromoneGrid.width && newY >= 0 && newY < pheromoneGrid.height) {
+                            const cell = pheromoneGrid.grid[newY][newX];
+                            if (cell.toFood > maxPheromone) {
+                                maxPheromone = cell.toFood;
+                                bestDirection = Math.atan2(j, i);
+                            }
+                        }
+                    }
+                }
 
-    const centerSensor = this.getSensor(this.direction, sensorDistance);
-    const leftSensor = this.getSensor(this.direction - sensorAngle, sensorDistance);
-    const rightSensor = this.getSensor(this.direction + sensorAngle, sensorDistance);
+                if (maxPheromone > 0.1) {
+                    let turn = bestDirection - this.direction;
+                    if (turn > Math.PI) turn -= 2 * Math.PI;
+                    if (turn < -Math.PI) turn += 2 * Math.PI;
+                    this.direction += turn * 0.1; // Smooth turning
+                }
 
-    const centerColor = this.getPixelColor(centerSensor, pheromoneData, app.screen.width);
-    const leftColor = this.getPixelColor(leftSensor, pheromoneData, app.screen.width);
-    const rightColor = this.getPixelColor(rightSensor, pheromoneData, app.screen.width);
+                if (this.sprite.position.x < 0 || this.sprite.position.x > pheromoneGrid.width * pheromoneGrid.cellSize || this.sprite.position.y < 0 || this.sprite.position.y > pheromoneGrid.height * pheromoneGrid.cellSize) {
+                    this.direction += Math.PI;
+                }
+                const distanceToFood = Math.hypot(this.sprite.position.x - foodLocation.x, this.sprite.position.y - foodLocation.y);
+                if (distanceToFood < 10) {
+                    this.state = 'returning-home';
+                    this.direction += Math.PI;
+                }
+            } else { // returning-home
+                const angleToNest = Math.atan2(nestLocation.y - this.sprite.y, nestLocation.x - this.sprite.x);
+                this.direction = angleToNest;
 
-    const targetPheromoneChannel = this.carryingFood ? 0 : 1; // 0 for Red (to home), 1 for Green (to food)
+                const distanceToNest = Math.hypot(this.sprite.position.x - nestLocation.x, this.sprite.position.y - nestLocation.y);
+                if (distanceToNest < 10) {
+                    this.state = 'seeking-food';
+                    this.direction += Math.PI;
+                    return true; // Signal successful food delivery
+                }
+            }
 
-    const centerStrength = centerColor[targetPheromoneChannel];
-    const leftStrength = leftColor[targetPheromoneChannel];
-    const rightStrength = rightColor[targetPheromoneChannel];
+            this.direction += (Math.random() - 0.5) * this.turningSpeed;
 
-    if (centerStrength > leftStrength && centerStrength > rightStrength) {
-      // Continue straight
-    } else if (leftStrength > rightStrength) {
-      this.direction -= turnStrength;
-    } else if (rightStrength > leftStrength) {
-      this.direction += turnStrength;
-    } else {
-        // Wander
-        this.direction += (Math.random() - 0.5) * 0.5;
-    }
+            this.sprite.x += Math.cos(this.direction) * this.speed * delta;
+            this.sprite.y += Math.sin(this.direction) * this.speed * delta;
+            this.sprite.rotation = this.direction;
 
-    // Food and Nest interaction
-    if (!this.carryingFood && this.isNear(foodLocation, 15)) {
-      this.carryingFood = true;
-      this.direction += Math.PI; // Turn around
-    }
-    if (this.carryingFood && this.isNear(nestLocation, 15)) {
-      this.carryingFood = false;
-      this.direction += Math.PI; // Turn around
-    }
+            this.lastPheromoneDrop += delta;
+            if (this.lastPheromoneDrop > 1) { 
+                this.lastPheromoneDrop = 0;
+                if (this.state === 'returning-home') {
+                    const gridX = Math.floor(this.sprite.x / pheromoneGrid.cellSize);
+                    const gridY = Math.floor(this.sprite.y / pheromoneGrid.cellSize);
 
-    const vx = Math.cos(this.direction) * this.speed;
-    const vy = Math.sin(this.direction) * this.speed;
-
-    this.sprite.x += vx * delta;
-    this.sprite.y += vy * delta;
-    this.sprite.rotation = this.direction;
-
-    // Boundary checks
-    this.handleBoundaries(app.screen.width, app.screen.height);
-
-    this.pheromoneDropCounter++;
-  }
-
-  shouldDropPheromone(): boolean {
-      return this.pheromoneDropCounter % 10 === 0;
-  }
-
-  private getSensor(angle: number, distance: number): PIXI.Point {
-      return new PIXI.Point(
-          this.sprite.x + Math.cos(angle) * distance,
-          this.sprite.y + Math.sin(angle) * distance
-      );
-  }
-
-  private getPixelColor(point: PIXI.Point, data: Uint8Array, width: number): [number, number, number] {
-      const x = Math.floor(point.x);
-      const y = Math.floor(point.y);
-      if (x < 0 || x >= width || y < 0 || y >= data.length / (width * 4)) {
-          return [0, 0, 0];
-      }
-      const i = (y * width + x) * 4;
-      return [data[i], data[i + 1], data[i + 2]]; // R, G, B
-  }
-
-  private isNear(point: PIXI.Point, radius: number): boolean {
-    return (this.sprite.x - point.x) ** 2 + (this.sprite.y - point.y) ** 2 < radius ** 2;
-  }
-
-  private handleBoundaries(width: number, height: number) {
-    const margin = 5;
-    if (this.sprite.x < margin || this.sprite.x > width - margin || this.sprite.y < margin || this.sprite.y > height - margin) {
-        this.direction += Math.PI * 0.9; // Turn back towards center
-    }
-  }
+                    if (gridX >= 0 && gridX < pheromoneGrid.width && gridY >= 0 && gridY < pheromoneGrid.height) {
+                        const cell = pheromoneGrid.grid[gridY][gridX];
+                        cell.toFood = Math.min(1, cell.toFood + 0.5);
+                    }
+                }
+            }
+            return false;
+        }
+    };
 }

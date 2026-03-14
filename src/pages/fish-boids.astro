@@ -4,6 +4,23 @@ import FishBoids from '../components/FishBoids.astro';
 ---
 
 <Layout title="Fish Boids">
-    <a href="/" class="back-link">&larr; Back to Home</a>
-    <FishBoids />
+	<main class="container mx-auto p-4">
+		<h1 class="text-4xl font-bold text-center mb-8">Fish Boids</h1>
+		
+		<div class="flex justify-center mb-8">
+			<FishBoids />
+		</div>
+
+		<div class="max-w-2xl mx-auto">
+			<h2 class="text-2xl font-semibold mb-4">How it Works</h2>
+			<p class="mb-4">
+				This simulation models the flocking behavior of fish using the "boids" algorithm. Here are the rules the fish follow:
+			</p>
+			<ul class="list-disc list-inside mb-4 space-y-2">
+				<li><span class="font-semibold">Separation:</span> Steer to avoid crowding local flockmates.</li>
+				<li><span class="font-semibold">Alignment:</span> Steer towards the average heading of local flockmates.</li>
+				<li><span class="font-semibold">Cohesion:</span> Steer to move toward the average position of local flockmates.</li>
+			</ul>
+		</div>
+	</main>
 </Layout>

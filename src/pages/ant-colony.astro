@@ -3,8 +3,34 @@ import Layout from '../layouts/Layout.astro';
 import AntColonySimulator from '../components/solid/AntColonySimulator';
 ---
 
-<Layout title="Ant Colony Simulator">
-  <a href="/" class="back-link">&larr; Back to Home</a>
-  <h1 class="title">Ant Colony Simulator</h1>
-  <AntColonySimulator client:only="solid-js" />
+<Layout title="Ant Colony Simulation">
+	<main class="container mx-auto p-4">
+		<h1 class="text-4xl font-bold text-center mb-8">Ant Colony Simulation</h1>
+		
+		<div class="flex justify-center mb-8">
+			<AntColonySimulator client:load />
+		</div>
+
+		<div class="max-w-2xl mx-auto">
+			<h2 class="text-2xl font-semibold mb-4">How it Works</h2>
+			<p class="mb-4">
+				This simulation models a colony of ants foraging for food. Here's a breakdown of the components and rules:
+			</p>
+			<ul class="list-disc list-inside mb-4 space-y-2">
+				<li><span class="font-semibold">Blue Circle:</span> The nest, where the ants start and return to with food.</li>
+				<li><span class="font-semibold">Green Circle:</span> The food source.</li>
+				<li><span class="font-semibold">White Dots:</span> The ants.</li>
+				<li><span class="font-semibold text-green-400">Green Pheromone Trail:</span> When an ant finds food and returns to the nest, it leaves a green pheromone trail that other ants can follow to the food source.</li>
+			</ul>
+			<h3 class="text-xl font-semibold mb-2">Ant Behavior</h3>
+			<ol class="list-decimal list-inside space-y-2">
+				<li>Ants start at the nest and explore randomly, searching for food.</li>
+				<li>If an ant finds a green pheromone trail, it has a high probability of following it.</li>
+				<li>When an ant reaches the food source, it picks up food and starts returning to the nest.</li>
+				<li>On its way back to the nest, the ant leaves a green pheromone trail.</li>
+				<li>Once the ant reaches the nest, it drops off the food and goes back to foraging.</li>
+                                <li>After 10 ants have returned to the nest with food, the food source will move to a new random location.</li>
+			</ol>
+		</div>
+	</main>
 </Layout>
