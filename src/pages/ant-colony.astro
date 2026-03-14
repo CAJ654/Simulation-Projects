@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AntColonySimulator from '../components/solid/AntColonySimulator';
+---
+
+<Layout title="Ant Colony Simulator">
+  <a href="/" class="back-link">&larr; Back to Home</a>
+  <h1 class="title">Ant Colony Simulator</h1>
+  <AntColonySimulator client:only="solid-js" />
+</Layout>
