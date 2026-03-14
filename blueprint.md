@@ -1,39 +1,36 @@
-# Project Blueprint
+
+# Application Blueprint
 
 ## Overview
 
-This project is a web application that showcases various interactive simulations and generative art built with Astro.js, React, and Preact. The focus is on creating a visually engaging and performant experience.
+This project is a static-first web application built with Astro.js, designed to showcase a variety of interactive web simulations and creative coding projects. It leverages Astro's "Islands Architecture" to deliver a high-performance, content-focused website with minimal client-side JavaScript by default. The application integrates multiple UI frameworks (React, Preact, Svelte) to demonstrate the flexibility of Astro in a multi-framework environment.
 
-## Implemented Features
+## Project Structure & Features
 
-### City Generation
+### Styling & Layout
 
-*   **Generative Model:** The application generates a new city layout each time the "Generate" button is clicked.
-*   **Dynamic Grid:** The city is built on a dynamic grid that can be resized by the user.
-*   **Building Types:** The generation includes Residential, Commercial, and Industrial building types, each with a unique color.
-*   **Improved Road Network:** Roads are generated to create a realistic city layout with a central highway and branching roads.
-*   **Variable Building Sizes:** Buildings are generated with random widths and heights.
-*   **Building Merging:** Adjacent buildings of the same type and density are merged into larger structures.
-*   **Density-Based Coloring:** Buildings are colored based on their density, with high-density buildings appearing darker and low-density buildings appearing lighter.
-*   **Zoning:** The city is divided into zones for different building types (Industrial, Downtown/Commercial, and Residential).
+*   **Global Styles:** A central `global.css` file provides base styling, including a dark theme, modern fonts, and consistent layout properties.
+*   **Layout Component:** A primary `Layout.astro` component wraps all pages, ensuring a consistent header, footer, and metadata.
+*   **Navigation:** A simple and intuitive navigation bar is present on the homepage, linking to the different simulation pages. Each simulation page includes a "Back to Home" link.
 
-### Fish Boids Simulation
+### Implemented simulations
 
-*   **Flocking Behavior:** The simulation implements the classic boids algorithm for flocking behavior, including alignment, cohesion, and separation.
-*   **Interactive Controls:** Users can adjust the number of flocks and the speed of the boids.
-*   **Shape Variety:** The simulation includes various shapes for the boids, including fish, triangles, and squares.
+| Feature                 | Framework | Description                                                                                                                              |
+| ----------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Fish Boids**          | Astro     | A vanilla JavaScript boids simulation rendered on an HTML canvas. The Astro component handles the UI controls and embeds the script.        |
+| **Whirlpool**           | Preact    | A particle simulation based on a vector field (Perlin noise).                                                                            |
+| **City Generation**     | React     | A simulation that procedurally generates a city map, including buildings, roads, and agents (people).                                    |
+| **Forest Fire**         | React     | An interactive grid-based simulation of a forest fire, where users can set fires and observe the spread based on adjustable parameters. |
 
-### Whirlpool Simulation
+## Current Task: Migrate Forest Fire Simulator to Svelte
 
-*   **Particle System:** A particle system is used to visualize a vector field.
-*   **Whirlpool Force:** Particles are influenced by a central whirlpool force, creating a vortex effect.
-*   **Interactive Controls:** Users can adjust the "Strength," "Friction," and "Density" of the simulation in real-time.
+**Plan:**
 
-## Current Task: Implement Whirlpool Simulation
-
-The Whirlpool simulation has been implemented using Preact.
-
-1.  **Particle System:** Created a particle system to visualize the vector field.
-2.  **Whirlpool Logic:** Implemented the physics for a whirlpool force that attracts and rotates the particles.
-3.  **Interactive Controls:** Added sliders to control the `Strength`, `Friction`, and `Density` of the simulation.
-4.  **Component Integration:** The Preact component is rendered within an Astro page.
+1.  **Create New Svelte Component:** Create a new file at `src/components/svelte/ForestFireSimulator.svelte`.
+2.  **Translate Component Logic:** Convert the existing React logic from `src/components/react/ForestFireSimulator.tsx` to Svelte. This involves:
+    *   Re-implementing state management using Svelte's native reactivity.
+    *   Converting the JSX template to Svelte's HTML-based template syntax.
+    *   Moving the component's styling into a `<style>` block within the `.svelte` file.
+3.  **Update Astro Page:** Modify the `src/pages/cajd-projects.astro` file to remove the React component and import/render the new Svelte component.
+4.  **Remove Old React Component:** Delete the now-unused `src/components/react/ForestFireSimulator.tsx` file.
+5.  **Verify:** Check the browser preview to ensure the Svelte-based Forest Fire Simulator is working correctly.
