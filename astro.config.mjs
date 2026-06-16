@@ -12,7 +12,7 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://caj654.github.io',
-  base: '/simulation-projects/',
+  base: '/Simulation-Projects/',
 
   // Enable many frameworks to support all different kinds of components.
   integrations: [
