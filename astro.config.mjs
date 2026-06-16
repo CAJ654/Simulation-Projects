@@ -11,6 +11,9 @@ import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://caj654.github.io',
+  base: '/simulation-projects/',
+
   // Enable many frameworks to support all different kinds of components.
   integrations: [
     preact({ include: ['**/preact/*'] }),
@@ -23,8 +26,4 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  build: {
-    assetsRelativeQuery: true, // Helps with local asset resolution
-  },
-  base: './', // Forces relative paths for the build
 });
