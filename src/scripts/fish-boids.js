@@ -1,5 +1,5 @@
-// Import the Boid and Vector classes from Boid.js
-import { Boid, Vector } from './Boid.js';
+// Import the Boid, Vector, and Predator classes from Boid.js
+import { Boid, Vector, Predator } from './Boid.js';
 
 // Get the canvas and its 2D rendering context
 const canvas = document.getElementById('boids-canvas');
@@ -21,6 +21,10 @@ const flockCount = document.getElementById('flock-count');
 const speedSlider = document.getElementById('speed-slider');
 const speedValue = document.getElementById('speed-value');
 
+// Get the predator slider and its corresponding value display
+const predatorSlider = document.getElementById('predator-slider');
+const predatorCount = document.getElementById('predator-count');
+
 // Get the container for the stationary shape sliders
 const stationaryShapeSlidersContainer = document.getElementById('stationary-shape-sliders-container');
 
@@ -31,8 +35,9 @@ const shapes = document.querySelectorAll('.shape');
 let width = canvas.width = window.innerWidth;
 let height = canvas.height = window.innerHeight;
 
-// Create an array to store the boids
+// Create arrays to store the boids and predators
 const boids = [];
+const predators = [];
 
 // Define an array of colors for the different flocks
 const flockColors = [
@@ -75,19 +80,38 @@ function createFlocks() {
     }
 }
 
+// Function to create predator boids
+function createPredators() {
+    predators.length = 0;
+    const count = parseInt(predatorSlider.value);
+    predatorCount.textContent = count;
+    for (let i = 0; i < count; i++) {
+        const p = new Predator(Math.random() * width, Math.random() * height, width, height);
+        predators.push(p);
+    }
+}
+
 // Function to animate the boids
 function animate() {
     // Clear the canvas with a semi-transparent black
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, width, height);
 
-    // Update and draw each boid
+    // Update each fish boid (pass predators for flee force)
     boids.forEach(boid => {
         if (boid.shape === 'fish') {
-            boid.flock(boids);
+            boid.flock(boids, predators);
             boid.update();
             boid.borders();
-        } 
+        }
+    });
+
+    // Update each predator
+    const fishBoids = boids.filter(b => b.shape === 'fish');
+    predators.forEach(pred => {
+        pred.hunt(fishBoids);
+        pred.update();
+        pred.borders();
     });
 
     // Draw each boid on the canvas
@@ -138,6 +162,32 @@ function animate() {
             ctx.rect(-size / 2, -size / 2, size, size);
             ctx.fill();
         }
+        ctx.restore();
+    });
+
+    // Draw predators as red shark silhouettes
+    predators.forEach(pred => {
+        ctx.save();
+        ctx.translate(pred.position.x, pred.position.y);
+        ctx.rotate(Math.atan2(pred.velocity.y, pred.velocity.x));
+        ctx.fillStyle = '#ff2222';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 18, 8, 0, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(0, -8);
+        ctx.lineTo(8, -20);
+        ctx.lineTo(16, -8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(12, -2, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(12.5, -2, 0.8, 0, 2 * Math.PI);
+        ctx.fill();
         ctx.restore();
     });
 
@@ -248,6 +298,9 @@ canvas.addEventListener('drop', e => {
 // Add an input event listener to the flock slider
 flockSlider.addEventListener('input', createFlocks);
 
+// Add an input event listener to the predator slider
+predatorSlider.addEventListener('input', createPredators);
+
 // Add an input event listener to the speed slider
 speedSlider.addEventListener('input', () => {
     const newSpeed = parseFloat(speedSlider.value);
@@ -267,6 +320,10 @@ window.addEventListener('resize', () => {
         boid.width = width;
         boid.height = height;
     });
+    predators.forEach(pred => {
+        pred.width = width;
+        pred.height = height;
+    });
 });
 
 // --- Initialisation ---
@@ -278,8 +335,9 @@ controlToggleButton.innerHTML = '<';
 shapesToggleButton.innerHTML = '<';
 
 
-// Create the initial flocks
+// Create the initial flocks and predators
 createFlocks();
+createPredators();
 
 // Set the initial speed value
 speedValue.textContent = speedSlider.value;
