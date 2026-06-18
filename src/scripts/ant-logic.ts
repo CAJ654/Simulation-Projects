@@ -23,6 +23,10 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
         state: 'seeking-food' | 'returning-home' = 'seeking-food';
         lastPheromoneDrop = 0;
         carryingFoodId: number | null = null;
+        // Starts at 1.0 on food pickup, decreases each deposit so cells near
+        // food get strong pheromone and cells near the nest get weak pheromone.
+        // This creates a gradient that guides seeking ants toward the food.
+        pheromoneBudget = 0;
 
         constructor(texture: PIXI.Texture, x: number, y: number) {
             this.sprite = new PIXIInstance.Sprite(texture);
@@ -71,6 +75,7 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
                     const distanceToFood = Math.hypot(this.sprite.position.x - src.x, this.sprite.position.y - src.y);
                     if (distanceToFood < 10 && src.quantity > 0) {
                         this.carryingFoodId = src.id;
+                        this.pheromoneBudget = 1.0; // full budget near food, decays toward nest
                         this.state = 'returning-home';
                         this.direction += Math.PI;
                         break;
@@ -86,6 +91,7 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
                     this.direction += Math.PI;
                     const deliveredId = this.carryingFoodId;
                     this.carryingFoodId = null;
+                    this.pheromoneBudget = 0;
                     return deliveredId;
                 }
             }
@@ -105,8 +111,11 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
 
                     if (gridX >= 0 && gridX < pheromoneGrid.width && gridY >= 0 && gridY < pheromoneGrid.height) {
                         const cell = pheromoneGrid.grid[gridY][gridX];
+                        const depositAmount = this.pheromoneBudget * 0.5;
+                        // Budget decays each deposit: strong near food, weak near nest
+                        this.pheromoneBudget = Math.max(0.05, this.pheromoneBudget - 0.025);
                         const current = cell.toFood.get(this.carryingFoodId) ?? 0;
-                        cell.toFood.set(this.carryingFoodId, Math.min(1, current + 0.5));
+                        cell.toFood.set(this.carryingFoodId, Math.min(1, current + depositAmount));
                     }
                 }
             }
