@@ -27,6 +27,9 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
         // food get strong pheromone and cells near the nest get weak pheromone.
         // This creates a gradient that guides seeking ants toward the food.
         pheromoneBudget = 0;
+        // Positions of food sources this ant has previously visited.
+        // Pruned automatically when a source is depleted and replaced.
+        knownFoodSources: { id: number; x: number; y: number }[] = [];
 
         constructor(texture: PIXI.Texture, x: number, y: number) {
             this.sprite = new PIXIInstance.Sprite(texture);
@@ -66,6 +69,27 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
                     this.direction += turn * 0.1;
                 }
 
+                // Prune memory of sources that have been depleted/replaced
+                const activeFoodIds = new Set(foodSources.map(s => s.id));
+                this.knownFoodSources = this.knownFoodSources.filter(k => activeFoodIds.has(k.id));
+
+                // Memory steering: head toward the nearest previously-visited source.
+                // Uses a stronger coefficient (0.2) than pheromone (0.1) so ants
+                // with memory navigate more directly than naive explorers.
+                if (this.knownFoodSources.length > 0) {
+                    let nearest = this.knownFoodSources[0];
+                    let minDist = Math.hypot(this.sprite.x - nearest.x, this.sprite.y - nearest.y);
+                    for (const known of this.knownFoodSources) {
+                        const d = Math.hypot(this.sprite.x - known.x, this.sprite.y - known.y);
+                        if (d < minDist) { minDist = d; nearest = known; }
+                    }
+                    const memoryAngle = Math.atan2(nearest.y - this.sprite.y, nearest.x - this.sprite.x);
+                    let turn = memoryAngle - this.direction;
+                    if (turn > Math.PI) turn -= 2 * Math.PI;
+                    if (turn < -Math.PI) turn += 2 * Math.PI;
+                    this.direction += turn * 0.2;
+                }
+
                 if (this.sprite.position.x < 0 || this.sprite.position.x > pheromoneGrid.width * pheromoneGrid.cellSize ||
                     this.sprite.position.y < 0 || this.sprite.position.y > pheromoneGrid.height * pheromoneGrid.cellSize) {
                     this.direction += Math.PI;
@@ -78,6 +102,10 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
                         this.pheromoneBudget = 1.0; // full budget near food, decays toward nest
                         this.state = 'returning-home';
                         this.direction += Math.PI;
+                        // Remember this source for future trips
+                        if (!this.knownFoodSources.some(k => k.id === src.id)) {
+                            this.knownFoodSources.push({ id: src.id, x: src.x, y: src.y });
+                        }
                         break;
                     }
                 }
