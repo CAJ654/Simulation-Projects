@@ -1,10 +1,17 @@
 import type * as PIXI from 'pixi.js';
 
+export interface FoodSource {
+    id: number;
+    x: number;
+    y: number;
+    quantity: number;
+}
+
 export interface PheromoneGrid {
     width: number;
     height: number;
     cellSize: number;
-    grid: { toFood: number; toHome: number }[][];
+    grid: { toFood: Map<number, number>; toHome: number }[][];
 }
 
 export function getAntClass(PIXIInstance: typeof PIXI) {
@@ -15,6 +22,7 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
         turningSpeed = 0.2;
         state: 'seeking-food' | 'returning-home' = 'seeking-food';
         lastPheromoneDrop = 0;
+        carryingFoodId: number | null = null;
 
         constructor(texture: PIXI.Texture, x: number, y: number) {
             this.sprite = new PIXIInstance.Sprite(texture);
@@ -23,7 +31,8 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
             this.sprite.rotation = this.direction;
         }
 
-        update(delta: number, foodLocation: PIXI.Point, nestLocation: PIXI.Point, pheromoneGrid: PheromoneGrid): boolean {
+        // Returns the id of the delivered food source, or null if nothing delivered this tick.
+        update(delta: number, foodSources: FoodSource[], nestLocation: PIXI.Point, pheromoneGrid: PheromoneGrid): number | null {
             if (this.state === 'seeking-food') {
                 const gridX = Math.floor(this.sprite.x / pheromoneGrid.cellSize);
                 const gridY = Math.floor(this.sprite.y / pheromoneGrid.cellSize);
@@ -36,10 +45,12 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
                         const newY = gridY + j;
                         if (newX >= 0 && newX < pheromoneGrid.width && newY >= 0 && newY < pheromoneGrid.height) {
                             const cell = pheromoneGrid.grid[newY][newX];
-                            if (cell.toFood > maxPheromone) {
-                                maxPheromone = cell.toFood;
-                                bestDirection = Math.atan2(j, i);
-                            }
+                            cell.toFood.forEach((strength) => {
+                                if (strength > maxPheromone) {
+                                    maxPheromone = strength;
+                                    bestDirection = Math.atan2(j, i);
+                                }
+                            });
                         }
                     }
                 }
@@ -48,16 +59,22 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
                     let turn = bestDirection - this.direction;
                     if (turn > Math.PI) turn -= 2 * Math.PI;
                     if (turn < -Math.PI) turn += 2 * Math.PI;
-                    this.direction += turn * 0.1; // Smooth turning
+                    this.direction += turn * 0.1;
                 }
 
-                if (this.sprite.position.x < 0 || this.sprite.position.x > pheromoneGrid.width * pheromoneGrid.cellSize || this.sprite.position.y < 0 || this.sprite.position.y > pheromoneGrid.height * pheromoneGrid.cellSize) {
+                if (this.sprite.position.x < 0 || this.sprite.position.x > pheromoneGrid.width * pheromoneGrid.cellSize ||
+                    this.sprite.position.y < 0 || this.sprite.position.y > pheromoneGrid.height * pheromoneGrid.cellSize) {
                     this.direction += Math.PI;
                 }
-                const distanceToFood = Math.hypot(this.sprite.position.x - foodLocation.x, this.sprite.position.y - foodLocation.y);
-                if (distanceToFood < 10) {
-                    this.state = 'returning-home';
-                    this.direction += Math.PI;
+
+                for (const src of foodSources) {
+                    const distanceToFood = Math.hypot(this.sprite.position.x - src.x, this.sprite.position.y - src.y);
+                    if (distanceToFood < 10 && src.quantity > 0) {
+                        this.carryingFoodId = src.id;
+                        this.state = 'returning-home';
+                        this.direction += Math.PI;
+                        break;
+                    }
                 }
             } else { // returning-home
                 const angleToNest = Math.atan2(nestLocation.y - this.sprite.y, nestLocation.x - this.sprite.x);
@@ -67,7 +84,9 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
                 if (distanceToNest < 10) {
                     this.state = 'seeking-food';
                     this.direction += Math.PI;
-                    return true; // Signal successful food delivery
+                    const deliveredId = this.carryingFoodId;
+                    this.carryingFoodId = null;
+                    return deliveredId;
                 }
             }
 
@@ -78,19 +97,20 @@ export function getAntClass(PIXIInstance: typeof PIXI) {
             this.sprite.rotation = this.direction;
 
             this.lastPheromoneDrop += delta;
-            if (this.lastPheromoneDrop > 1) { 
+            if (this.lastPheromoneDrop > 1) {
                 this.lastPheromoneDrop = 0;
-                if (this.state === 'returning-home') {
+                if (this.state === 'returning-home' && this.carryingFoodId !== null) {
                     const gridX = Math.floor(this.sprite.x / pheromoneGrid.cellSize);
                     const gridY = Math.floor(this.sprite.y / pheromoneGrid.cellSize);
 
                     if (gridX >= 0 && gridX < pheromoneGrid.width && gridY >= 0 && gridY < pheromoneGrid.height) {
                         const cell = pheromoneGrid.grid[gridY][gridX];
-                        cell.toFood = Math.min(1, cell.toFood + 0.5);
+                        const current = cell.toFood.get(this.carryingFoodId) ?? 0;
+                        cell.toFood.set(this.carryingFoodId, Math.min(1, current + 0.5));
                     }
                 }
             }
-            return false;
+            return null;
         }
     };
 }

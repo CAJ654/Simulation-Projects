@@ -121,17 +121,44 @@ export class Boid {
         return steering;
     }
 
+    // Steers away from nearby predators, weighted by inverse distance.
+    flee(predators) {
+        const fleeRadius = 120;
+        let steering = new Vector();
+        let total = 0;
+        for (let pred of predators) {
+            const d = this.position.dist(pred.position);
+            if (d < fleeRadius && d > 0) {
+                let diff = this.position.copy().sub(pred.position);
+                diff.div(d);
+                steering.add(diff);
+                total++;
+            }
+        }
+        if (total > 0) {
+            steering.div(total);
+            steering.setMag(this.maxSpeed);
+            steering.sub(this.velocity);
+            steering.limit(this.maxForce * 3);
+        }
+        return steering;
+    }
+
     // Applies the flocking rules to the boid.
-    flock(boids) {
-        // Calculates the alignment, cohesion, and separation forces.
+    flock(boids, predators = []) {
         let alignment = this.align(boids);
         let cohesion = this.cohesion(boids);
         let separation = this.separation(boids);
 
-        // Applies the forces to the boid's acceleration.
         this.acceleration.add(alignment);
         this.acceleration.add(cohesion);
         this.acceleration.add(separation);
+
+        if (predators.length > 0) {
+            let flee = this.flee(predators);
+            flee.mult(2.5);
+            this.acceleration.add(flee);
+        }
     }
 
     // Updates the boid's position and velocity.
@@ -157,6 +184,41 @@ export class Boid {
             this.position.y = 0;
         } else if (this.position.y < 0) {
             this.position.y = this.height;
+        }
+    }
+}
+
+// Predator boid that hunts the nearest fish prey.
+export class Predator extends Boid {
+    constructor(x, y, width, height) {
+        super(x, y, width, height, -1, '#ff2222');
+        this.maxSpeed = 5;
+        this.maxForce = 0.15;
+        this.size = 20;
+        this.shape = 'predator';
+        this.huntRadius = 200;
+        this.target = null;
+    }
+
+    hunt(preyBoids) {
+        let nearest = null;
+        let minDist = this.huntRadius;
+        for (let b of preyBoids) {
+            const d = this.position.dist(b.position);
+            if (d < minDist) { minDist = d; nearest = b; }
+        }
+        this.target = nearest;
+
+        if (this.target) {
+            let desired = this.target.position.copy().sub(this.position);
+            desired.setMag(this.maxSpeed);
+            let steer = desired.sub(this.velocity);
+            steer.limit(this.maxForce);
+            this.acceleration.add(steer);
+        } else {
+            let wander = Vector.random2D();
+            wander.mult(0.05);
+            this.acceleration.add(wander);
         }
     }
 }
